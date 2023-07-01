@@ -95,13 +95,16 @@ def main():
     soup = BeautifulSoup(req.text, "html.parser")
     national_prices = get_national_prices(soup)
     state_prices = get_state_prices(national_prices)
-    date = str(datetime.datetime.now(datetime.timezone.utc))
-    with open(f"prices/national/{date}.csv", "w") as fd:
-        writer = csv.writer(fd)
-        writer.writerows(national_prices)
+    timestamp = str(datetime.datetime.now(datetime.timezone.utc))
+    date = str(datetime.datetime.now(datetime.timezone.utc).date())
 
-    with open(f"prices/states/{date}.csv", "w") as fd:
+    with open(f"prices/national/{timestamp}.csv", "w") as fd:
         writer = csv.writer(fd)
+        writer.writerows([[date] + state for state in national_prices])
+
+    with open(f"prices/states/{timestamp}.csv", "w") as fd:
+        writer = csv.writer(fd)
+        writer.writerows([[date] + county for county in state_prices])
         writer.writerows(state_prices)
 
     elapsed = time.perf_counter() - s
