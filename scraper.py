@@ -3,11 +3,12 @@
 
 import argparse
 import csv
+import datetime
 import json
 import logging
+import os
 import re
 import time
-import datetime
 
 from bs4 import BeautifulSoup
 import requests
@@ -75,6 +76,21 @@ def get_state_prices(national_prices):
                 )
     return all_prices
 
+def generate_master_files():
+    scopes = ["national", "states"]
+    for scope in scopes:
+        filenames = dict()
+        for file in os.listdir(f"./prices/{scope}"):
+            filename = os.fsdecode(file)
+            if filename.endswith(".csv"):
+                filenames[filename.split(" ")[0]] = filename
+
+        with open(f"prices/{scope}_master.csv", "w") as mfd:
+            sorted_filenames = list(filenames.values())
+            sorted_filenames.sort()
+            for filename in sorted_filenames:
+                with open(f"./prices/{scope}/{filename}") as fd:
+                    mfd.write(fd.read())
 
 def main():
     args = parse_args()
@@ -106,6 +122,8 @@ def main():
         writer = csv.writer(fd)
         writer.writerows([[date] + county for county in state_prices])
         writer.writerows(state_prices)
+
+    generate_master_files()
 
     elapsed = time.perf_counter() - s
     log.info(f"{__file__} executed in {elapsed:0.5f} seconds.")
